@@ -4,6 +4,12 @@ import { useActionState, useState } from 'react'
 import Link from 'next/link'
 import type { Producto } from '@/lib/productos'
 import { ETIQUETAS_DISPONIBLES } from '@/lib/etiquetas'
+import {
+    ACCEPT_IMAGEN,
+    formatearMB,
+    MAX_IMAGEN_BYTES,
+    TIPOS_IMAGEN_PERMITIDOS,
+} from '@/lib/imagen'
 import { guardarProducto, solicitarUrlSubida, type EstadoProducto } from '@/app/admin/acciones-productos'
 
 type FilaVariante = {
@@ -56,10 +62,22 @@ export default function ProductoForm({ producto }: { producto?: Producto }) {
     }
 
     async function procesarArchivo(archivo: File) {
-        setSubiendo(true)
         setErrorImagen(null)
 
-        const respuesta = await solicitarUrlSubida(archivo.name, archivo.type)
+        if (!TIPOS_IMAGEN_PERMITIDOS.includes(archivo.type)) {
+            setErrorImagen('Formato no permitido. Usa JPG, PNG, WEBP o AVIF.')
+            return
+        }
+        if (archivo.size > MAX_IMAGEN_BYTES) {
+            setErrorImagen(
+                `La imagen pesa ${formatearMB(archivo.size)}; el máximo es ${formatearMB(MAX_IMAGEN_BYTES)}.`
+            )
+            return
+        }
+
+        setSubiendo(true)
+
+        const respuesta = await solicitarUrlSubida(archivo.type, archivo.size)
         if ('error' in respuesta) {
             setErrorImagen(respuesta.error)
             setSubiendo(false)
@@ -177,7 +195,7 @@ export default function ProductoForm({ producto }: { producto?: Producto }) {
                                     />
                                     <input
                                         type="number"
-                                        min="0"
+                                        min="0.01"
                                         step="0.01"
                                         value={fila.precio}
                                         onChange={(e) => actualizarFila(fila.key, { precio: e.target.value })}
@@ -269,7 +287,7 @@ export default function ProductoForm({ producto }: { producto?: Producto }) {
                                 </span>
                                 <input
                                     type="file"
-                                    accept="image/jpeg,image/png,image/webp,image/avif"
+                                    accept={ACCEPT_IMAGEN}
                                     onChange={subirArchivo}
                                     disabled={subiendo}
                                     className="sr-only"

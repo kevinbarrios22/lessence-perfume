@@ -1,6 +1,7 @@
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { randomUUID } from 'crypto'
+import { TIPOS_IMAGEN_PERMITIDOS } from '@/lib/imagen'
 
 export function r2Configurado(): boolean {
     return Boolean(
@@ -31,17 +32,21 @@ function getCliente(): S3Client {
     return cliente
 }
 
-const TIPOS_PERMITIDOS = ['image/jpeg', 'image/png', 'image/webp', 'image/avif']
+const EXTENSION_POR_TIPO: Record<string, string> = {
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/webp': 'webp',
+    'image/avif': 'avif',
+}
 
 export async function crearUrlSubida(
-    nombreOriginal: string,
     contentType: string
 ): Promise<{ uploadUrl: string; publicUrl: string }> {
-    if (!TIPOS_PERMITIDOS.includes(contentType)) {
+    const extension = EXTENSION_POR_TIPO[contentType]
+    if (!extension || !TIPOS_IMAGEN_PERMITIDOS.includes(contentType)) {
         throw new Error('Formato no permitido. Usa JPG, PNG, WEBP o AVIF.')
     }
 
-    const extension = nombreOriginal.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg'
     const key = `productos/${randomUUID()}.${extension}`
 
     const uploadUrl = await getSignedUrl(

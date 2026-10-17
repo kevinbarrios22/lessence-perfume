@@ -13,6 +13,11 @@ import {
     type VarianteInput,
 } from '@/lib/productos'
 import { esEtiquetaValida } from '@/lib/etiquetas'
+import {
+    formatearMB,
+    MAX_IMAGEN_BYTES,
+    TIPOS_IMAGEN_PERMITIDOS,
+} from '@/lib/imagen'
 
 export type EstadoProducto = { error?: string }
 
@@ -41,14 +46,17 @@ function parsearVariantes(raw: string): VarianteInput[] {
         const tamaño = String((item as Record<string, unknown>).tamaño ?? '').trim()
         const precio = Number((item as Record<string, unknown>).precio)
         if (!tamaño) continue
-        if (!Number.isFinite(precio) || precio < 0) {
-            throw new Error(`Precio inválido para el tamaño "${tamaño}"`)
+        if (!Number.isFinite(precio) || precio <= 0) {
+            throw new Error(`Ingresá un precio válido para el tamaño "${tamaño}"`)
         }
         variantes.push({
             tamaño,
             precio,
             disponible: Boolean((item as Record<string, unknown>).disponible),
         })
+    }
+    if (variantes.length === 0) {
+        throw new Error('Agregá al menos un tamaño con su precio.')
     }
     return variantes
 }
@@ -140,8 +148,8 @@ export async function eliminarProductoAction(formData: FormData): Promise<void> 
 }
 
 export async function solicitarUrlSubida(
-    nombreArchivo: string,
-    contentType: string
+    contentType: string,
+    tamaño: number
 ): Promise<{ uploadUrl: string; publicUrl: string } | { error: string }> {
     if (!(await sesionActiva())) {
         return { error: 'Sesión expirada. Vuelve a iniciar sesión.' }
@@ -149,8 +157,14 @@ export async function solicitarUrlSubida(
     if (!r2Configurado()) {
         return { error: 'El almacenamiento de imágenes (R2) no está configurado.' }
     }
+    if (!TIPOS_IMAGEN_PERMITIDOS.includes(contentType)) {
+        return { error: 'Formato no permitido. Usa JPG, PNG, WEBP o AVIF.' }
+    }
+    if (!Number.isFinite(tamaño) || tamaño <= 0 || tamaño > MAX_IMAGEN_BYTES) {
+        return { error: `La imagen no puede superar ${formatearMB(MAX_IMAGEN_BYTES)}.` }
+    }
     try {
-        return await crearUrlSubida(nombreArchivo, contentType)
+        return await crearUrlSubida(contentType)
     } catch (error) {
         return { error: error instanceof Error ? error.message : 'No se pudo preparar la subida' }
     }
