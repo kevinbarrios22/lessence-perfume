@@ -13,6 +13,7 @@ import {
     type VarianteInput,
 } from '@/lib/productos'
 import { esEtiquetaValida } from '@/lib/etiquetas'
+import { esGeneroValido } from '@/lib/opciones'
 import {
     formatearMB,
     MAX_IMAGEN_BYTES,
@@ -73,12 +74,17 @@ function leerEntrada(formData: FormData): ProductoInput {
         throw new Error('El slug es obligatorio')
     }
 
+    const genero = texto(formData, 'genero')
+    if (!esGeneroValido(genero)) {
+        throw new Error('Seleccioná un género válido (Unisex, Masculino o Femenino).')
+    }
+
     return {
         nombre,
         marca: texto(formData, 'marca'),
         slug,
         descripcion: texto(formData, 'descripcion'),
-        genero: texto(formData, 'genero'),
+        genero,
         tipo: texto(formData, 'tipo'),
         imagen_principal: textoONulo(formData, 'imagen_principal'),
         disponible: formData.get('disponible') === 'on',

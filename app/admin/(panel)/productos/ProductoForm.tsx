@@ -4,6 +4,7 @@ import { useActionState, useState } from 'react'
 import Link from 'next/link'
 import type { Producto } from '@/lib/productos'
 import { ETIQUETAS_DISPONIBLES } from '@/lib/etiquetas'
+import { GENEROS } from '@/lib/opciones'
 import {
     ACCEPT_IMAGEN,
     formatearMB,
@@ -149,7 +150,18 @@ export default function ProductoForm({ producto }: { producto?: Producto }) {
                             </div>
                             <div>
                                 <label className={etiqueta} htmlFor="genero">Género</label>
-                                <input id="genero" name="genero" defaultValue={producto?.genero} className={campo} />
+                                <select
+                                    id="genero"
+                                    name="genero"
+                                    required
+                                    defaultValue={producto?.genero ?? ''}
+                                    className={campo}
+                                >
+                                    <option value="" disabled>Seleccionar…</option>
+                                    {GENEROS.map((g) => (
+                                        <option key={g} value={g}>{g}</option>
+                                    ))}
+                                </select>
                             </div>
                             <div>
                                 <label className={etiqueta} htmlFor="tipo">Tipo</label>
