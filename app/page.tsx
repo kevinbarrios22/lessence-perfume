@@ -1,5 +1,10 @@
+import type { Metadata } from 'next'
 import { listarProductos } from '@/lib/productos'
 import CatalogoCliente from '@/components/CatalogoCliente'
+
+export const metadata: Metadata = {
+  alternates: { canonical: '/' },
+}
 
 export default async function Home() {
   let listado

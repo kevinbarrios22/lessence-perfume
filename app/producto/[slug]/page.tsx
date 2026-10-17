@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { listarSlugsDisponibles, obtenerProductoPorSlug } from '@/lib/productos'
+import { MONEDA } from '@/lib/formato'
 import { notFound } from 'next/navigation'
 import ProductoDetalle from './ProductoDetalle'
 
@@ -60,5 +61,44 @@ export default async function ProductoPage({
         notFound()
     }
 
-    return <ProductoDetalle producto={producto} />
+    const variantesDisponibles = producto.variantes.filter((v) => v.disponible)
+    const precios = (variantesDisponibles.length ? variantesDisponibles : producto.variantes).map(
+        (v) => v.precio
+    )
+    const jsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: `${producto.marca} ${producto.nombre}`.trim(),
+        description: producto.descripcion || undefined,
+        image: producto.imagen_principal ? [producto.imagen_principal] : undefined,
+        brand: producto.marca ? { '@type': 'Brand', name: producto.marca } : undefined,
+        category: producto.tipo || undefined,
+        ...(precios.length
+            ? {
+                offers: {
+                    '@type': 'AggregateOffer',
+                    priceCurrency: MONEDA,
+                    lowPrice: Math.min(...precios),
+                    highPrice: Math.max(...precios),
+                    offerCount: producto.variantes.length,
+                    availability:
+                        variantesDisponibles.length > 0
+                            ? 'https://schema.org/InStock'
+                            : 'https://schema.org/OutOfStock',
+                },
+            }
+            : {}),
+    }
+
+    return (
+        <>
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{
+                    __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
+                }}
+            />
+            <ProductoDetalle producto={producto} />
+        </>
+    )
 }
