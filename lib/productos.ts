@@ -77,17 +77,109 @@ const SELECT_PRODUCTO = `
   ) as variantes
 `
 
-export async function listarProductos(): Promise<Producto[]> {
+export type FiltrosCatalogo = {
+    q?: string
+    genero?: string
+    marca?: string
+    etiqueta?: string
+    pagina?: number
+    porPagina?: number
+}
+
+export type ResultadoCatalogo = {
+    productos: Producto[]
+    total: number
+    pagina: number
+    totalPaginas: number
+}
+
+export type OpcionesFiltro = {
+    marcas: string[]
+    generos: string[]
+    etiquetas: string[]
+}
+
+const POR_PAGINA_DEFECTO = 12
+const POR_PAGINA_MAX = 48
+
+export async function buscarProductos(filtros: FiltrosCatalogo): Promise<ResultadoCatalogo> {
+    const porPagina = Math.min(
+        Math.max(Math.trunc(filtros.porPagina ?? POR_PAGINA_DEFECTO), 1),
+        POR_PAGINA_MAX
+    )
     const pool = getPool()
-    const { rows } = await pool.query<ProductoRow>(`
+
+    const condiciones = ['p.disponible = true']
+    const valores: unknown[] = []
+    const param = (valor: unknown) => {
+        valores.push(valor)
+        return `$${valores.length}`
+    }
+
+    const q = filtros.q?.trim()
+    if (q) {
+        const patron = `%${q}%`
+        condiciones.push(`(p.nombre ilike ${param(patron)} or p.marca ilike ${param(patron)})`)
+    }
+    if (filtros.genero) condiciones.push(`p.genero = ${param(filtros.genero)}`)
+    if (filtros.marca) condiciones.push(`p.marca = ${param(filtros.marca)}`)
+    if (filtros.etiqueta) condiciones.push(`${param(filtros.etiqueta)} = any(p.etiquetas)`)
+
+    const where = condiciones.join(' and ')
+
+    const totalRes = await pool.query<{ total: number }>(
+        `select count(*)::int as total from productos p where ${where}`,
+        valores
+    )
+    const total = totalRes.rows[0]?.total ?? 0
+    const totalPaginas = Math.max(Math.ceil(total / porPagina), 1)
+    const pagina = Math.min(Math.max(Math.trunc(filtros.pagina ?? 1), 1), totalPaginas)
+    const offset = (pagina - 1) * porPagina
+
+    const { rows } = await pool.query<ProductoRow>(
+        `
     select ${SELECT_PRODUCTO}
     from productos p
     left join variantes v on v.producto_id = p.id
-    where p.disponible = true
+    where ${where}
     group by p.id
     order by p.nombre asc
+    limit ${param(porPagina)} offset ${param(offset)}
+  `,
+        valores
+    )
+
+    return { productos: rows.map(mapProducto), total, pagina, totalPaginas }
+}
+
+export async function listarOpcionesFiltro(): Promise<OpcionesFiltro> {
+    const pool = getPool()
+    const { rows } = await pool.query<{
+        marcas: string[] | null
+        generos: string[] | null
+        etiquetas: string[] | null
+    }>(`
+    select
+      (
+        select array_agg(m order by m)
+        from (select distinct marca as m from productos where disponible = true and coalesce(marca, '') <> '') s
+      ) as marcas,
+      (
+        select array_agg(g order by g)
+        from (select distinct genero as g from productos where disponible = true and coalesce(genero, '') <> '') s
+      ) as generos,
+      (
+        select array_agg(distinct e order by e)
+        from productos p, unnest(p.etiquetas) e
+        where p.disponible = true
+      ) as etiquetas
   `)
-    return rows.map(mapProducto)
+    const fila = rows[0]
+    return {
+        marcas: fila?.marcas ?? [],
+        generos: fila?.generos ?? [],
+        etiquetas: fila?.etiquetas ?? [],
+    }
 }
 
 export async function listarSlugsDisponibles(): Promise<string[]> {
