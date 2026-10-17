@@ -5,6 +5,7 @@ type Props = {
     totalPaginas: number
     queryBase: string
     basePath?: string
+    ancla?: string
 }
 
 function rangoPaginas(actual: number, total: number): (number | '...')[] {
@@ -19,18 +20,24 @@ function rangoPaginas(actual: number, total: number): (number | '...')[] {
     return paginas
 }
 
-function hrefPagina(basePath: string, queryBase: string, pagina: number): string {
+function hrefPagina(basePath: string, queryBase: string, ancla: string, pagina: number): string {
     const params = new URLSearchParams(queryBase)
     if (pagina > 1) params.set('pagina', String(pagina))
     else params.delete('pagina')
     const qs = params.toString()
-    return `${basePath}${qs ? `?${qs}` : ''}#catalogo`
+    return `${basePath}${qs ? `?${qs}` : ''}${ancla}`
 }
 
 const botonBase =
     'inline-flex min-w-[2.5rem] items-center justify-center rounded-sm border px-3 py-2 text-sm transition-colors'
 
-export default function Paginacion({ pagina, totalPaginas, queryBase, basePath = '/' }: Props) {
+export default function Paginacion({
+    pagina,
+    totalPaginas,
+    queryBase,
+    basePath = '/',
+    ancla = '#catalogo',
+}: Props) {
     if (totalPaginas <= 1) return null
 
     const paginas = rangoPaginas(pagina, totalPaginas)
@@ -40,7 +47,7 @@ export default function Paginacion({ pagina, totalPaginas, queryBase, basePath =
     return (
         <nav className="mt-10 flex flex-wrap items-center justify-center gap-2" aria-label="Paginación">
             <Link
-                href={hrefPagina(basePath, queryBase, anterior)}
+                href={hrefPagina(basePath, queryBase, ancla, anterior)}
                 aria-disabled={pagina <= 1}
                 scroll={false}
                 className={`${botonBase} ${
@@ -60,7 +67,7 @@ export default function Paginacion({ pagina, totalPaginas, queryBase, basePath =
                 ) : (
                     <Link
                         key={n}
-                        href={hrefPagina(basePath, queryBase, n)}
+                        href={hrefPagina(basePath, queryBase, ancla, n)}
                         aria-current={n === pagina ? 'page' : undefined}
                         scroll={false}
                         className={`${botonBase} ${
@@ -75,7 +82,7 @@ export default function Paginacion({ pagina, totalPaginas, queryBase, basePath =
             )}
 
             <Link
-                href={hrefPagina(basePath, queryBase, siguiente)}
+                href={hrefPagina(basePath, queryBase, ancla, siguiente)}
                 aria-disabled={pagina >= totalPaginas}
                 scroll={false}
                 className={`${botonBase} ${

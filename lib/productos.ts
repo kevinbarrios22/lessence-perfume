@@ -247,16 +247,65 @@ export type ProductoInput = {
     variantes: VarianteInput[]
 }
 
-export async function listarTodosProductos(): Promise<Producto[]> {
+export type EstadoProducto = 'todos' | 'visible' | 'oculto'
+
+export type FiltrosProductosAdmin = {
+    q?: string
+    estado?: EstadoProducto
+    pagina?: number
+    porPagina?: number
+}
+
+const POR_PAGINA_ADMIN_DEFECTO = 20
+
+export async function listarProductosAdmin(
+    filtros: FiltrosProductosAdmin = {}
+): Promise<ResultadoCatalogo> {
+    const porPagina = Math.min(
+        Math.max(Math.trunc(filtros.porPagina ?? POR_PAGINA_ADMIN_DEFECTO), 1),
+        100
+    )
     const pool = getPool()
-    const { rows } = await pool.query<ProductoRow>(`
+    const condiciones: string[] = []
+    const valores: unknown[] = []
+    const param = (valor: unknown) => {
+        valores.push(valor)
+        return `$${valores.length}`
+    }
+
+    const q = filtros.q?.trim()
+    if (q) {
+        const patron = `%${q}%`
+        condiciones.push(`(p.nombre ilike ${param(patron)} or p.marca ilike ${param(patron)})`)
+    }
+    if (filtros.estado === 'visible') condiciones.push('p.disponible = true')
+    else if (filtros.estado === 'oculto') condiciones.push('p.disponible = false')
+
+    const where = condiciones.length ? `where ${condiciones.join(' and ')}` : ''
+
+    const totalRes = await pool.query<{ total: number }>(
+        `select count(*)::int as total from productos p ${where}`,
+        valores
+    )
+    const total = totalRes.rows[0]?.total ?? 0
+    const totalPaginas = Math.max(Math.ceil(total / porPagina), 1)
+    const pagina = Math.min(Math.max(Math.trunc(filtros.pagina ?? 1), 1), totalPaginas)
+    const offset = (pagina - 1) * porPagina
+
+    const { rows } = await pool.query<ProductoRow>(
+        `
     select ${SELECT_PRODUCTO}
     from productos p
     left join variantes v on v.producto_id = p.id
+    ${where}
     group by p.id
     order by p.created_at desc
-  `)
-    return rows.map(mapProducto)
+    limit ${param(porPagina)} offset ${param(offset)}
+  `,
+        valores
+    )
+
+    return { productos: rows.map(mapProducto), total, pagina, totalPaginas }
 }
 
 export async function obtenerProductoPorId(id: string): Promise<Producto | null> {
