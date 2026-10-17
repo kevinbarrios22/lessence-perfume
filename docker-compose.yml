@@ -1,0 +1,22 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: parfumerie-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: parfumerie
+      POSTGRES_PASSWORD: parfumerie
+      POSTGRES_DB: parfumerie
+    ports:
+      - "5434:5432"
+    volumes:
+      - parfumerie_pgdata:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U parfumerie -d parfumerie"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  parfumerie_pgdata:
