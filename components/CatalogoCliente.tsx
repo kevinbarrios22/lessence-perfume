@@ -168,7 +168,7 @@ export default function CatalogoCliente({ productos }: { productos: Producto[] }
         </p>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 sm:gap-x-6 gap-y-8 md:gap-y-10">
-          {filtrados.map((producto) => {
+          {filtrados.map((producto, index) => {
             const agotado = estaAgotado(producto)
             return (
               <Link
@@ -180,6 +180,7 @@ export default function CatalogoCliente({ productos }: { productos: Producto[] }
                   <ProductImage
                     src={producto.imagen_principal}
                     alt={producto.nombre}
+                    priority={index < 2}
                     sizes="(min-width: 768px) 33vw, 50vw"
                     className="aspect-[4/5] rounded-sm transition-transform duration-300 group-hover:scale-[1.02]"
                   />
