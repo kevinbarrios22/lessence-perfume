@@ -3,8 +3,8 @@ import { LOCALE, MONEDA } from '@/lib/config'
 const formateador = new Intl.NumberFormat(LOCALE, {
     style: 'currency',
     currency: MONEDA,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
 })
 
 export function formatearPrecio(n: number): string {

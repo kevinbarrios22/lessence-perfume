@@ -195,13 +195,14 @@ export default function ProductoForm({ producto }: { producto?: Producto }) {
                                     />
                                     <input
                                         type="number"
-                                        min="0.01"
-                                        step="0.01"
+                                        min="1"
+                                        step="1"
+                                        inputMode="numeric"
                                         value={fila.precio}
                                         onChange={(e) => actualizarFila(fila.key, { precio: e.target.value })}
-                                        placeholder="Precio"
+                                        placeholder="Precio (COP)"
                                         aria-label="Precio"
-                                        className={`${campoBase} w-28`}
+                                        className={`${campoBase} w-36`}
                                     />
                                     <label className="flex items-center gap-2 text-sm text-humo">
                                         <input
