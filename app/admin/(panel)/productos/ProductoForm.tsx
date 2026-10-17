@@ -4,7 +4,7 @@ import { useActionState, useState } from 'react'
 import Link from 'next/link'
 import type { Producto } from '@/lib/productos'
 import { ETIQUETAS_DISPONIBLES } from '@/lib/etiquetas'
-import { GENEROS } from '@/lib/opciones'
+import { esTamanoEstandar, GENEROS, TAMANOS } from '@/lib/opciones'
 import {
     ACCEPT_IMAGEN,
     formatearMB,
@@ -18,6 +18,7 @@ type FilaVariante = {
     tamaño: string
     precio: string
     disponible: boolean
+    personalizado: boolean
 }
 
 function nuevaFila(): FilaVariante {
@@ -26,6 +27,7 @@ function nuevaFila(): FilaVariante {
         tamaño: '',
         precio: '',
         disponible: true,
+        personalizado: false,
     }
 }
 
@@ -46,6 +48,7 @@ export default function ProductoForm({ producto }: { producto?: Producto }) {
                 tamaño: v.tamaño,
                 precio: String(v.precio),
                 disponible: v.disponible,
+                personalizado: !esTamanoEstandar(v.tamaño),
             }))
             : [nuevaFila()]
     )
@@ -198,13 +201,44 @@ export default function ProductoForm({ producto }: { producto?: Producto }) {
                         <div className="space-y-3">
                             {variantes.map((fila) => (
                                 <div key={fila.key} className="flex flex-wrap items-center gap-3">
-                                    <input
-                                        value={fila.tamaño}
-                                        onChange={(e) => actualizarFila(fila.key, { tamaño: e.target.value })}
-                                        placeholder="100ml"
-                                        aria-label="Tamaño"
-                                        className={`${campoBase} w-32`}
-                                    />
+                                    {fila.personalizado ? (
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                value={fila.tamaño}
+                                                onChange={(e) => actualizarFila(fila.key, { tamaño: e.target.value })}
+                                                placeholder="Ej: 75ml"
+                                                aria-label="Tamaño personalizado"
+                                                className={`${campoBase} w-28`}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => actualizarFila(fila.key, { personalizado: false, tamaño: '' })}
+                                                className="text-xs underline text-nude hover:text-cobre"
+                                            >
+                                                Ver lista
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <select
+                                            value={fila.tamaño}
+                                            onChange={(e) => {
+                                                const valor = e.target.value
+                                                if (valor === '__otro__') {
+                                                    actualizarFila(fila.key, { personalizado: true, tamaño: '' })
+                                                } else {
+                                                    actualizarFila(fila.key, { tamaño: valor })
+                                                }
+                                            }}
+                                            aria-label="Tamaño"
+                                            className={`${campoBase} w-32`}
+                                        >
+                                            <option value="" disabled>Seleccionar…</option>
+                                            {TAMANOS.map((t) => (
+                                                <option key={t} value={t}>{t}</option>
+                                            ))}
+                                            <option value="__otro__">Otro…</option>
+                                        </select>
+                                    )}
                                     <input
                                         type="number"
                                         min="1"
