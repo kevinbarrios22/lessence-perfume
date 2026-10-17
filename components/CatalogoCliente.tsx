@@ -6,16 +6,8 @@ import ProductImage from '@/components/ProductImage'
 import { formatearPrecio } from '@/lib/formato'
 import { limpiarSlug } from '@/lib/slug'
 import { claseEtiqueta, ETIQUETAS_DISPONIBLES } from '@/lib/etiquetas'
+import { estaAgotado, precioDesde } from '@/lib/catalogo'
 import type { Producto } from '@/lib/productos'
-
-function precioDesde(variantes: { precio: number }[]): number {
-  const precios = variantes.map((v) => v.precio).filter((p) => Number.isFinite(p))
-  return precios.length ? Math.min(...precios) : 0
-}
-
-function estaAgotado(producto: Producto): boolean {
-  return producto.variantes.filter((v) => v.disponible).length === 0
-}
 
 function valoresUnicos(valores: string[]): string[] {
   return Array.from(new Set(valores.filter((v) => v.trim() !== ''))).sort((a, b) =>

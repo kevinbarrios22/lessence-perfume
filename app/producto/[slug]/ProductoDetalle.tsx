@@ -5,14 +5,15 @@ import Link from 'next/link'
 import { useCarrito } from '@/lib/CarritoContext'
 import { formatearPrecio } from '@/lib/formato'
 import { claseEtiqueta } from '@/lib/etiquetas'
+import { variantesDisponibles } from '@/lib/catalogo'
 import ProductImage from '@/components/ProductImage'
 import type { Producto, Variante } from '@/lib/productos'
 
 export default function ProductoDetalle({ producto }: { producto: Producto }) {
   const { agregarItem } = useCarrito()
-  const variantesDisponibles = producto.variantes.filter((v) => v.disponible)
+  const disponibles = variantesDisponibles(producto)
   const [varianteSeleccionada, setVarianteSeleccionada] = useState<Variante | null>(
-      variantesDisponibles[0] || null
+      disponibles[0] || null
   )
   const [agregado, setAgregado] = useState(false)
 
@@ -53,7 +54,7 @@ export default function ProductoDetalle({ producto }: { producto: Producto }) {
   const hayNotas = Boolean(
       producto.notas_salida || producto.notas_corazon || producto.notas_fondo
   )
-  const agotado = variantesDisponibles.length === 0
+  const agotado = disponibles.length === 0
 
   return (
       <main className="container-boutique py-8 md:py-14">

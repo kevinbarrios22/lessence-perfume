@@ -1,14 +1,11 @@
 import type { MetadataRoute } from 'next'
 import { listarSlugsDisponibles } from '@/lib/productos'
+import { siteUrl } from '@/lib/config'
 
 export const revalidate = 3600
 
-function baseUrl(): string {
-    return (process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000').replace(/\/$/, '')
-}
-
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-    const base = baseUrl()
+    const base = siteUrl()
     const slugs = await listarSlugsDisponibles()
     const ahora = new Date()
 

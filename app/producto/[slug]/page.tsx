@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { listarSlugsDisponibles, obtenerProductoPorSlug } from '@/lib/productos'
-import { MONEDA } from '@/lib/formato'
+import { MONEDA, SITIO_NOMBRE } from '@/lib/config'
 import { notFound } from 'next/navigation'
 import ProductoDetalle from './ProductoDetalle'
 
@@ -35,8 +35,8 @@ export async function generateMetadata({
             title: titulo,
             description: descripcion,
             type: 'website',
-            locale: 'es_UY',
-            siteName: 'L\'ESSENCE',
+            locale: 'es_CO',
+            siteName: SITIO_NOMBRE,
             url: `/producto/${producto.slug}`,
             ...(imagenes ? { images: imagenes } : {}),
         },

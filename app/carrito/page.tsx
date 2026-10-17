@@ -2,10 +2,9 @@
 
 import { useCarrito } from '@/lib/CarritoContext'
 import { formatearPrecio } from '@/lib/formato'
+import { WHATSAPP_NUMERO } from '@/lib/config'
 import ProductImage from '@/components/ProductImage'
 import Link from 'next/link'
-
-const NUMERO_WHATSAPP = '573228759145'
 
 export default function CarritoPage() {
     const { items, quitarItem, cambiarCantidad, total } = useCarrito()
@@ -34,7 +33,7 @@ export default function CarritoPage() {
             '',
             `Total: ${formatearPrecio(total)}`,
         ].join('\n')
-        return `https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`
+        return `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(mensaje)}`
     }
 
     return (

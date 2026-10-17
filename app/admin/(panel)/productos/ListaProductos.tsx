@@ -4,19 +4,11 @@ import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import ProductImage from '@/components/ProductImage'
 import { formatearPrecio } from '@/lib/formato'
+import { estaAgotado, precioDesde } from '@/lib/catalogo'
 import BotonEliminar from './BotonEliminar'
 import type { Producto } from '@/lib/productos'
 
 type Estado = 'Todos' | 'Visible' | 'Oculto'
-
-function precioDesde(variantes: { precio: number }[]): number {
-    const precios = variantes.map((v) => v.precio).filter((p) => Number.isFinite(p))
-    return precios.length ? Math.min(...precios) : 0
-}
-
-function estaAgotado(producto: Producto): boolean {
-    return producto.variantes.filter((v) => v.disponible).length === 0
-}
 
 const chipBase = 'px-3 py-1.5 rounded-full text-xs border transition-colors'
 

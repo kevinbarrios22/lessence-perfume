@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Playfair_Display, DM_Sans } from 'next/font/google'
 import { CarritoProvider } from '@/lib/CarritoContext'
+import { SITIO_NOMBRE, siteUrl } from '@/lib/config'
 import Header from '@/components/Header'
 import './globals.css'
 
@@ -24,24 +25,24 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
+    metadataBase: new URL(siteUrl()),
     title: {
-        default: "L'ESSENCE — Perfumes de nicho",
-        template: "%s — L'ESSENCE",
+        default: `${SITIO_NOMBRE} — Perfumes de nicho`,
+        template: `%s — ${SITIO_NOMBRE}`,
     },
     description:
         'Perfumes de nicho seleccionados a mano. Una curaduría boutique para quienes buscan fragancias con carácter.',
     openGraph: {
-        title: "L'ESSENCE — Perfumes de nicho",
+        title: `${SITIO_NOMBRE} — Perfumes de nicho`,
         description:
             'Perfumes de nicho seleccionados a mano. Una curaduría boutique para quienes buscan fragancias con carácter.',
         type: 'website',
-        locale: 'es_UY',
-        siteName: "L'ESSENCE",
+        locale: 'es_CO',
+        siteName: SITIO_NOMBRE,
     },
     twitter: {
         card: 'summary_large_image',
-        title: "L'ESSENCE — Perfumes de nicho",
+        title: `${SITIO_NOMBRE} — Perfumes de nicho`,
         description:
             'Perfumes de nicho seleccionados a mano. Una curaduría boutique para quienes buscan fragancias con carácter.',
     },

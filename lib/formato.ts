@@ -1,6 +1,13 @@
-export const MONEDA = 'USD'
+import { LOCALE, MONEDA } from '@/lib/config'
+
+const formateador = new Intl.NumberFormat(LOCALE, {
+    style: 'currency',
+    currency: MONEDA,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+})
 
 export function formatearPrecio(n: number): string {
-    if (!Number.isFinite(n)) return '$0'
-    return '$' + Math.round(n).toLocaleString('es-UY')
+    if (!Number.isFinite(n)) return formateador.format(0)
+    return formateador.format(n)
 }
