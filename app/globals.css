@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
 :root {
-  /* Paleta — La Vitrina */
+  /* Paleta — La Vitrina (textos secundarios con contraste AA) */
   --humo: #1A1611;
-  --cobre: #96835A;
+  --cobre: #6F5C38;
   --porcelana: #F5F0E8;
-  --nude: #C4A68B;
+  --nude: #806550;
   --alabastro: #D4C9BC;
 
   --background: var(--porcelana);
