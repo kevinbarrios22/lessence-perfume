@@ -17,7 +17,6 @@ export function formatearMB(bytes: number): string {
 export const HOSTS_IMAGEN_PERMITIDOS = [
     'r2.dev',
     'r2.cloudflarestorage.com',
-    'supabase.co',
 ]
 
 export function hostImagenPermitido(src: string): boolean {

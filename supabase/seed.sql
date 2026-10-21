@@ -1,2 +1,0 @@
--- Los datos de ejemplo están en supabase/migrations/20260410190000_inicial.sql
--- Este archivo existe para `supabase db reset` (ver config.toml).
