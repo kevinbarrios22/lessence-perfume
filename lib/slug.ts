@@ -6,7 +6,3 @@ export function limpiarSlug(slug: string): string {
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-+|-+$/g, '')
 }
-
-export function normalizarSlug(slug: string): string {
-    return limpiarSlug(slug).replace(/-/g, '')
-}

@@ -1,6 +1,6 @@
 import type { PoolClient } from 'pg'
 import { getPool } from '@/lib/db'
-import { limpiarSlug, normalizarSlug } from '@/lib/slug'
+import { limpiarSlug } from '@/lib/slug'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -197,10 +197,11 @@ export async function listarSlugsDisponibles(): Promise<string[]> {
 }
 
 export async function obtenerProductoPorSlug(slug: string): Promise<Producto | null> {
-    const pool = getPool()
     const slugLimpio = limpiarSlug(slug)
+    if (!slugLimpio) return null
 
-    const exacto = await pool.query<ProductoRow>(
+    const pool = getPool()
+    const { rows } = await pool.query<ProductoRow>(
         `
     select ${SELECT_PRODUCTO}
     from productos p
@@ -212,23 +213,7 @@ export async function obtenerProductoPorSlug(slug: string): Promise<Producto | n
         [slugLimpio]
     )
 
-    if (exacto.rows[0]) {
-        return mapProducto(exacto.rows[0])
-    }
-
-    const objetivo = normalizarSlug(slug)
-    const { rows } = await pool.query<ProductoRow>(`
-    select ${SELECT_PRODUCTO}
-    from productos p
-    left join variantes v on v.producto_id = p.id
-    where p.disponible = true
-    group by p.id
-  `)
-
-    const match = rows.find(
-        (p) => normalizarSlug(p.slug ?? '') === objetivo
-    )
-    return match ? mapProducto(match) : null
+    return rows[0] ? mapProducto(rows[0]) : null
 }
 
 export type VarianteInput = {
