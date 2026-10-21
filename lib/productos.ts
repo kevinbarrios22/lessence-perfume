@@ -196,6 +196,22 @@ export async function listarSlugsDisponibles(): Promise<string[]> {
     return rows.map((r) => limpiarSlug(r.slug))
 }
 
+export type SlugConFecha = { slug: string; actualizadoEn: Date }
+
+export async function listarSlugsParaSitemap(): Promise<SlugConFecha[]> {
+    const pool = getPool()
+    const { rows } = await pool.query<{ slug: string; actualizado_en: Date }>(
+        `select slug, updated_at as actualizado_en
+         from productos
+         where disponible = true
+         order by slug`
+    )
+    return rows.map((fila) => ({
+        slug: limpiarSlug(fila.slug),
+        actualizadoEn: fila.actualizado_en,
+    }))
+}
+
 export async function obtenerProductoPorSlug(slug: string): Promise<Producto | null> {
     const slugLimpio = limpiarSlug(slug)
     if (!slugLimpio) return null
