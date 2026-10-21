@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import { hostImagenPermitido } from '@/lib/imagen'
 
 type Props = {
     src?: string | null
@@ -53,6 +54,7 @@ export default function ProductImage({ src, alt, priority = false, sizes, classN
                     fill
                     sizes={sizes}
                     priority={priority}
+                    unoptimized={!hostImagenPermitido(src)}
                     className="object-cover"
                 />
             ) : (

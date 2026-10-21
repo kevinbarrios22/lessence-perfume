@@ -2,6 +2,12 @@ import type { PoolClient } from 'pg'
 import { getPool } from '@/lib/db'
 import { limpiarSlug, normalizarSlug } from '@/lib/slug'
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+export function esIdProductoValido(id: string): boolean {
+    return UUID_RE.test(id)
+}
+
 export type Variante = {
     id: string
     tamaño: string
@@ -309,6 +315,7 @@ export async function listarProductosAdmin(
 }
 
 export async function obtenerProductoPorId(id: string): Promise<Producto | null> {
+    if (!esIdProductoValido(id)) return null
     const pool = getPool()
     const { rows } = await pool.query<ProductoRow>(
         `
@@ -365,6 +372,9 @@ export async function crearProducto(input: ProductoInput): Promise<string> {
 }
 
 export async function actualizarProducto(id: string, input: ProductoInput): Promise<void> {
+    if (!esIdProductoValido(id)) {
+        throw new Error('ID de producto inválido')
+    }
     const pool = getPool()
     const client = await pool.connect()
     try {
@@ -405,6 +415,7 @@ export async function actualizarProducto(id: string, input: ProductoInput): Prom
 }
 
 export async function eliminarProducto(id: string): Promise<void> {
+    if (!esIdProductoValido(id)) return
     const pool = getPool()
     await pool.query('delete from productos where id = $1', [id])
 }

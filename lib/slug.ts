@@ -1,7 +1,12 @@
 export function limpiarSlug(slug: string): string {
-    return slug.trim().replace(/\s+/g, '-').toLowerCase()
+    return slug
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
 }
 
 export function normalizarSlug(slug: string): string {
-    return slug.toLowerCase().replace(/[^a-z0-9]+/g, '')
+    return limpiarSlug(slug).replace(/-/g, '')
 }
