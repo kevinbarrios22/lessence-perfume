@@ -1,7 +1,11 @@
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
+import {
+    S3Client,
+    PutObjectCommand,
+    DeleteObjectCommand,
+} from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { randomUUID } from 'crypto'
-import { TIPOS_IMAGEN_PERMITIDOS } from '@/lib/imagen'
+import { claveImagenR2, TIPOS_IMAGEN_PERMITIDOS } from './imagen'
 
 export function r2Configurado(): boolean {
     return Boolean(
@@ -61,4 +65,22 @@ export async function crearUrlSubida(
 
     const base = (process.env.R2_PUBLIC_URL as string).replace(/\/$/, '')
     return { uploadUrl, publicUrl: `${base}/${key}` }
+}
+
+export async function eliminarImagenR2(
+    publicUrl: string | null | undefined
+): Promise<void> {
+    const key = claveImagenR2(publicUrl)
+    if (!key || !r2Configurado()) return
+
+    try {
+        await getCliente().send(
+            new DeleteObjectCommand({
+                Bucket: process.env.R2_BUCKET,
+                Key: key,
+            })
+        )
+    } catch (error) {
+        console.error('No se pudo eliminar la imagen de R2', error)
+    }
 }

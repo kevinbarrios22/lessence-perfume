@@ -3,12 +3,14 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { sesionActiva } from '@/lib/sesion'
-import { crearUrlSubida, r2Configurado } from '@/lib/r2'
+import { crearUrlSubida, eliminarImagenR2, r2Configurado } from '@/lib/r2'
 import { limpiarSlug } from '@/lib/slug'
 import {
     actualizarProducto,
     crearProducto,
     eliminarProducto,
+    imagenEnUso,
+    obtenerProductoPorId,
     type ProductoInput,
     type VarianteInput,
 } from '@/lib/productos'
@@ -45,16 +47,27 @@ function parsearVariantes(raw: string): VarianteInput[] {
         throw new Error('Las variantes no tienen un formato válido')
     }
     const variantes: VarianteInput[] = []
+    const vistos = new Set<string>()
     for (const item of datos) {
-        if (typeof item !== 'object' || item === null) continue
+        if (typeof item !== 'object' || item === null) {
+            throw new Error('Las variantes tienen datos inválidos.')
+        }
         const tamaño = String((item as Record<string, unknown>).tamaño ?? '').trim()
         const precio = Number((item as Record<string, unknown>).precio)
-        if (!tamaño) continue
+        if (!tamaño) {
+            throw new Error('Completá el tamaño de cada variante o quitá las filas vacías.')
+        }
+        if (vistos.has(tamaño)) {
+            throw new Error(
+                `El tamaño "${tamaño}" está repetido. Cada tamaño debe aparecer una sola vez.`
+            )
+        }
         if (!Number.isInteger(precio) || precio < PRECIO_MINIMO_COP) {
             throw new Error(
                 `El precio de "${tamaño}" debe estar en pesos colombianos, sin puntos ni centavos (ej: 84900).`
             )
         }
+        vistos.add(tamaño)
         variantes.push({
             tamaño,
             precio,
@@ -104,10 +117,20 @@ function leerEntrada(formData: FormData): ProductoInput {
     }
 }
 
-function revalidarCatalogo(slug: string) {
-    revalidatePath('/')
+function revalidarCatalogo(slug: string, slugAnterior?: string | null) {
     revalidatePath('/admin/productos')
     revalidatePath(`/producto/${slug}`)
+    if (slugAnterior && slugAnterior !== slug) {
+        revalidatePath(`/producto/${slugAnterior}`)
+    }
+    revalidatePath('/sitemap.xml')
+}
+
+function esSlugDuplicado(error: unknown): boolean {
+    if (typeof error !== 'object' || error === null) return false
+    const codigo = (error as { code?: string }).code
+    const restriccion = String((error as { constraint?: string }).constraint ?? '')
+    return codigo === '23505' && restriccion.includes('slug')
 }
 
 export async function guardarProducto(
@@ -126,6 +149,7 @@ export async function guardarProducto(
     }
 
     const id = textoONulo(formData, 'id')
+    const anterior = id ? await obtenerProductoPorId(id) : null
 
     try {
         if (id) {
@@ -135,14 +159,21 @@ export async function guardarProducto(
         }
     } catch (error) {
         console.error(error)
-        const mensaje =
-            error instanceof Error && error.message.includes('duplicate')
-                ? 'Ya existe un producto con ese slug'
-                : 'No se pudo guardar el producto'
+        const mensaje = esSlugDuplicado(error)
+            ? 'Ya existe un producto con ese slug'
+            : 'No se pudo guardar el producto'
         return { error: mensaje }
     }
 
-    revalidarCatalogo(entrada.slug)
+    if (
+        anterior?.imagen_principal &&
+        anterior.imagen_principal !== entrada.imagen_principal &&
+        !(await imagenEnUso(anterior.imagen_principal, id ?? undefined))
+    ) {
+        await eliminarImagenR2(anterior.imagen_principal)
+    }
+
+    revalidarCatalogo(entrada.slug, anterior?.slug)
     redirect(`/admin/productos?ok=${id ? 'actualizado' : 'creado'}`)
 }
 
@@ -152,9 +183,20 @@ export async function eliminarProductoAction(formData: FormData): Promise<void> 
     }
     const id = String(formData.get('id') ?? '')
     if (!id) return
+
+    const producto = await obtenerProductoPorId(id)
     await eliminarProducto(id)
-    revalidatePath('/')
+
+    if (
+        producto?.imagen_principal &&
+        !(await imagenEnUso(producto.imagen_principal))
+    ) {
+        await eliminarImagenR2(producto.imagen_principal)
+    }
+
     revalidatePath('/admin/productos')
+    if (producto?.slug) revalidatePath(`/producto/${producto.slug}`)
+    revalidatePath('/sitemap.xml')
     redirect('/admin/productos?ok=eliminado')
 }
 

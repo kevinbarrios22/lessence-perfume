@@ -405,6 +405,22 @@ export async function eliminarProducto(id: string): Promise<void> {
     await pool.query('delete from productos where id = $1', [id])
 }
 
+export async function imagenEnUso(imagen: string, exceptoId?: string): Promise<boolean> {
+    const pool = getPool()
+    const excepto = exceptoId && esIdProductoValido(exceptoId) ? exceptoId : null
+    const { rows } = await pool.query<{ existe: boolean }>(
+        `
+        select exists(
+          select 1 from productos
+          where imagen_principal = $1
+            and ($2::uuid is null or id <> $2::uuid)
+        ) as existe
+        `,
+        [imagen, excepto]
+    )
+    return rows[0]?.existe ?? false
+}
+
 async function insertarVariantes(
     client: PoolClient,
     productoId: string,

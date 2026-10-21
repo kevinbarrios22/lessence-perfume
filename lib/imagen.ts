@@ -32,3 +32,12 @@ export function hostImagenPermitido(src: string): boolean {
     }
 }
 
+export function claveImagenR2(publicUrl: string | null | undefined): string | null {
+    const base = (process.env.R2_PUBLIC_URL ?? '').replace(/\/$/, '')
+    if (!base || !publicUrl || !publicUrl.startsWith(`${base}/`)) return null
+
+    const key = publicUrl.slice(base.length + 1)
+    if (!key.startsWith('productos/') || key.includes('..')) return null
+    return key
+}
+
