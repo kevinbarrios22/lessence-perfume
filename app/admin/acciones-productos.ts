@@ -165,12 +165,16 @@ export async function guardarProducto(
         return { error: mensaje }
     }
 
-    if (
-        anterior?.imagen_principal &&
-        anterior.imagen_principal !== entrada.imagen_principal &&
-        !(await imagenEnUso(anterior.imagen_principal, id ?? undefined))
-    ) {
-        await eliminarImagenR2(anterior.imagen_principal)
+    try {
+        if (
+            anterior?.imagen_principal &&
+            anterior.imagen_principal !== entrada.imagen_principal &&
+            !(await imagenEnUso(anterior.imagen_principal, id ?? undefined))
+        ) {
+            await eliminarImagenR2(anterior.imagen_principal)
+        }
+    } catch (error) {
+        console.error('No se pudo limpiar la imagen anterior', error)
     }
 
     revalidarCatalogo(entrada.slug, anterior?.slug)
@@ -187,11 +191,15 @@ export async function eliminarProductoAction(formData: FormData): Promise<void> 
     const producto = await obtenerProductoPorId(id)
     await eliminarProducto(id)
 
-    if (
-        producto?.imagen_principal &&
-        !(await imagenEnUso(producto.imagen_principal))
-    ) {
-        await eliminarImagenR2(producto.imagen_principal)
+    try {
+        if (
+            producto?.imagen_principal &&
+            !(await imagenEnUso(producto.imagen_principal))
+        ) {
+            await eliminarImagenR2(producto.imagen_principal)
+        }
+    } catch (error) {
+        console.error('No se pudo limpiar la imagen del producto', error)
     }
 
     revalidatePath('/admin/productos')
