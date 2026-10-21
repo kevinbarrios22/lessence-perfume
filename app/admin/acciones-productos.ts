@@ -22,6 +22,9 @@ import {
 
 export type EstadoProducto = { error?: string }
 
+// Los precios se manejan en pesos colombianos, sin centavos.
+const PRECIO_MINIMO_COP = 1000
+
 function texto(formData: FormData, campo: string): string {
     return String(formData.get(campo) ?? '').trim()
 }
@@ -47,8 +50,10 @@ function parsearVariantes(raw: string): VarianteInput[] {
         const tamaño = String((item as Record<string, unknown>).tamaño ?? '').trim()
         const precio = Number((item as Record<string, unknown>).precio)
         if (!tamaño) continue
-        if (!Number.isFinite(precio) || precio <= 0) {
-            throw new Error(`Ingresá un precio válido para el tamaño "${tamaño}"`)
+        if (!Number.isInteger(precio) || precio < PRECIO_MINIMO_COP) {
+            throw new Error(
+                `El precio de "${tamaño}" debe estar en pesos colombianos, sin puntos ni centavos (ej: 84900).`
+            )
         }
         variantes.push({
             tamaño,

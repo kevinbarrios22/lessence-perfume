@@ -49,6 +49,7 @@ insert into public.productos (nombre, marca, descripcion, genero, tipo, slug, di
     ('SAUVAGE', 'DIOR', 'Una fragancia masculina intensa y especiada, con notas de ambroxan, bergamota y pimienta. Diseñada para el hombre audaz y contemporáneo.', 'Masculino', 'Eau de Toilette', 'dior-sauvage', true, true, 'Bergamota de Calabria, pimienta', 'Ambroxan, lavanda, pimienta de Sichuan, pachulí', 'Ambroxan, cedro, ládano'),
     ('212vip', 'CAROLINA HERRERA', 'Eau de toilette masculina, elegante y versátil, perfecta para el día a día con un carácter distintivo.', 'Masculino', 'Eau de Toilette', 'ch-212-vip', true, true, 'Limón, menta', 'Notas acuáticas, jengibre, especias', 'Cuero, madera de gaiac, ámbar');
 
+-- Precios en pesos colombianos (COP), sin centavos.
 insert into public.variantes (producto_id, tamaño, precio, disponible) values
-    ((select id from public.productos where slug = 'dior-sauvage'), '100ml', 129.99, true),
-    ((select id from public.productos where slug = 'ch-212-vip'), '100ml', 109.99, true);
+    ((select id from public.productos where slug = 'dior-sauvage'), '100ml', 84900, true),
+    ((select id from public.productos where slug = 'ch-212-vip'), '100ml', 84900, true);

@@ -198,6 +198,9 @@ export default function ProductoForm({ producto }: { producto?: Producto }) {
 
                     <section className="border-t border-alabastro pt-6">
                         <h2 className={seccionTitulo}>Tamaños y precios</h2>
+                        <p className="-mt-2 mb-3 text-xs text-nude">
+                            Precios en pesos colombianos, sin puntos ni centavos (ej: 84900).
+                        </p>
                         <div className="space-y-3">
                             {variantes.map((fila) => (
                                 <div key={fila.key} className="flex flex-wrap items-center gap-3">
@@ -240,14 +243,17 @@ export default function ProductoForm({ producto }: { producto?: Producto }) {
                                         </select>
                                     )}
                                     <input
-                                        type="number"
-                                        min="1"
-                                        step="1"
+                                        type="text"
                                         inputMode="numeric"
+                                        autoComplete="off"
                                         value={fila.precio}
-                                        onChange={(e) => actualizarFila(fila.key, { precio: e.target.value })}
+                                        onChange={(e) =>
+                                            actualizarFila(fila.key, {
+                                                precio: e.target.value.replace(/\D/g, ''),
+                                            })
+                                        }
                                         placeholder="Precio (COP)"
-                                        aria-label="Precio"
+                                        aria-label="Precio en pesos colombianos"
                                         className={`${campoBase} w-36`}
                                     />
                                     <label className="flex items-center gap-2 text-sm text-humo">

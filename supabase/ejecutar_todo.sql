@@ -71,11 +71,12 @@ insert into public.productos (
     )
 on conflict (slug) do nothing;
 
+-- Precios en pesos colombianos (COP), sin centavos.
 insert into public.variantes (producto_id, tamaño, precio, disponible)
 select p.id, v.tamaño, v.precio, v.disponible
 from (values
-    ('dior-sauvage', '100ml', 129.99::numeric, true),
-    ('ch-212-vip', '100ml', 109.99::numeric, true)
+    ('dior-sauvage', '100ml', 84900::numeric, true),
+    ('ch-212-vip', '100ml', 84900::numeric, true)
 ) as v(slug, tamaño, precio, disponible)
 join public.productos p on p.slug = v.slug
 where not exists (
