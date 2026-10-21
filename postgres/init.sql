@@ -14,7 +14,6 @@ create table if not exists public.productos (
     notas_corazon text,
     notas_fondo text,
     disponible boolean not null default true,
-    destacado boolean not null default false,
     etiquetas text[] not null default '{}',
     created_at timestamptz not null default now()
 );
@@ -24,16 +23,16 @@ create table if not exists public.variantes (
     producto_id uuid not null references public.productos (id) on delete cascade,
     tamaño text not null,
     precio numeric not null,
-    disponible boolean not null default true
+    disponible boolean not null default true,
+    constraint variantes_producto_tamano_key unique (producto_id, tamaño)
 );
 
-create index if not exists productos_slug_idx on public.productos (slug);
-create index if not exists variantes_producto_idx on public.variantes (producto_id);
-
+-- El unique de slug ya crea su indice; el unique (producto_id, tamaño)
+-- cubre las busquedas por producto.
 insert into public.productos (
     nombre, marca, descripcion, genero, tipo, slug,
     notas_salida, notas_corazon, notas_fondo,
-    disponible, destacado
+    disponible
 ) values
     (
         'SAUVAGE', 'DIOR',
@@ -42,7 +41,7 @@ insert into public.productos (
         'Bergamota de Calabria, pimienta',
         'Ambroxan, lavanda, pimienta de Sichuan, pachulí',
         'Ambroxan, cedro, ládano',
-        true, true
+        true
     ),
     (
         '212vip', 'CAROLINA HERRERA',
@@ -51,7 +50,7 @@ insert into public.productos (
         'Limón, menta',
         'Notas acuáticas, jengibre, especias',
         'Cuero, madera de gaiac, ámbar',
-        true, true
+        true
     )
 on conflict (slug) do nothing;
 
@@ -63,7 +62,4 @@ from (values
     ('ch-212-vip', '100ml', 84900::numeric, true)
 ) as v(slug, tamaño, precio, disponible)
 join public.productos p on p.slug = v.slug
-where not exists (
-    select 1 from public.variantes ex
-    where ex.producto_id = p.id and ex.tamaño = v.tamaño
-);
+on conflict (producto_id, tamaño) do nothing;
