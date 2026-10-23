@@ -36,12 +36,30 @@ const itemsServidor: ItemCarrito[] = []
 let cargadoInicial = false
 const listeners = new Set<() => void>()
 
+function esItemValido(valor: unknown): valor is ItemCarrito {
+    if (typeof valor !== 'object' || valor === null) return false
+    const item = valor as Record<string, unknown>
+    return (
+        typeof item.productoId === 'string' &&
+        typeof item.nombre === 'string' &&
+        typeof item.marca === 'string' &&
+        typeof item.imagen === 'string' &&
+        typeof item.varianteId === 'string' &&
+        typeof item.tamaño === 'string' &&
+        typeof item.precio === 'number' &&
+        Number.isFinite(item.precio) &&
+        typeof item.cantidad === 'number' &&
+        Number.isFinite(item.cantidad) &&
+        item.cantidad > 0
+    )
+}
+
 function cargarDeStorage(): ItemCarrito[] {
     try {
         const raw = window.localStorage.getItem(STORAGE_KEY)
         if (!raw) return []
         const parsed = JSON.parse(raw)
-        return Array.isArray(parsed) ? parsed : []
+        return Array.isArray(parsed) ? parsed.filter(esItemValido) : []
     } catch {
         return []
     }
