@@ -43,15 +43,21 @@ const EXTENSION_POR_TIPO: Record<string, string> = {
     'image/avif': 'avif',
 }
 
+export type CarpetaImagen = 'productos' | 'banners'
+
 export async function crearUrlSubida(
-    contentType: string
+    contentType: string,
+    carpeta: CarpetaImagen = 'productos'
 ): Promise<{ uploadUrl: string; publicUrl: string }> {
     const extension = EXTENSION_POR_TIPO[contentType]
     if (!extension || !TIPOS_IMAGEN_PERMITIDOS.includes(contentType)) {
         throw new Error('Formato no permitido. Usa JPG, PNG, WEBP o AVIF.')
     }
+    if (carpeta !== 'productos' && carpeta !== 'banners') {
+        throw new Error('Carpeta de imagenes no válida')
+    }
 
-    const key = `productos/${randomUUID()}.${extension}`
+    const key = `${carpeta}/${randomUUID()}.${extension}`
 
     const uploadUrl = await getSignedUrl(
         getCliente(),

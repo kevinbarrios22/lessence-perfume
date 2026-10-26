@@ -32,12 +32,16 @@ export function hostImagenPermitido(src: string): boolean {
     }
 }
 
+const PREFIJOS_R2 = ['productos/', 'banners/']
+
 export function claveImagenR2(publicUrl: string | null | undefined): string | null {
     const base = (process.env.R2_PUBLIC_URL ?? '').replace(/\/$/, '')
     if (!base || !publicUrl || !publicUrl.startsWith(`${base}/`)) return null
 
     const key = publicUrl.slice(base.length + 1)
-    if (!key.startsWith('productos/') || key.includes('..')) return null
+    if (!PREFIJOS_R2.some((prefijo) => key.startsWith(prefijo)) || key.includes('..')) {
+        return null
+    }
     return key
 }
 

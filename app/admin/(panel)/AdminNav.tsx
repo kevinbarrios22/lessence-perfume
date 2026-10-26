@@ -10,10 +10,12 @@ export default function AdminNav() {
 
     const esNuevo = pathname === '/admin/productos/nuevo'
     const esLista = pathname.startsWith('/admin/productos') && !esNuevo
+    const esBanners = pathname.startsWith('/admin/banners')
 
     const enlaces = [
         { href: '/admin/productos', label: 'Productos', activo: esLista },
         { href: '/admin/productos/nuevo', label: 'Nuevo producto', activo: esNuevo },
+        { href: '/admin/banners', label: 'Banners', activo: esBanners },
     ]
 
     return (

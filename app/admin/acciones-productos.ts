@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { sesionActiva } from '@/lib/sesion'
-import { crearUrlSubida, eliminarImagenR2, r2Configurado } from '@/lib/r2'
+import { eliminarImagenR2 } from '@/lib/r2'
 import { limpiarSlug } from '@/lib/slug'
 import {
     actualizarProducto,
@@ -16,11 +16,6 @@ import {
 } from '@/lib/productos'
 import { esEtiquetaValida } from '@/lib/etiquetas'
 import { esGeneroValido } from '@/lib/opciones'
-import {
-    formatearMB,
-    MAX_IMAGEN_BYTES,
-    TIPOS_IMAGEN_PERMITIDOS,
-} from '@/lib/imagen'
 
 export type EstadoProducto = { error?: string }
 
@@ -206,27 +201,4 @@ export async function eliminarProductoAction(formData: FormData): Promise<void> 
     if (producto?.slug) revalidatePath(`/producto/${producto.slug}`)
     revalidatePath('/sitemap.xml')
     redirect('/admin/productos?ok=eliminado')
-}
-
-export async function solicitarUrlSubida(
-    contentType: string,
-    tamaño: number
-): Promise<{ uploadUrl: string; publicUrl: string } | { error: string }> {
-    if (!(await sesionActiva())) {
-        return { error: 'Sesión expirada. Vuelve a iniciar sesión.' }
-    }
-    if (!r2Configurado()) {
-        return { error: 'El almacenamiento de imágenes (R2) no está configurado.' }
-    }
-    if (!TIPOS_IMAGEN_PERMITIDOS.includes(contentType)) {
-        return { error: 'Formato no permitido. Usa JPG, PNG, WEBP o AVIF.' }
-    }
-    if (!Number.isFinite(tamaño) || tamaño <= 0 || tamaño > MAX_IMAGEN_BYTES) {
-        return { error: `La imagen no puede superar ${formatearMB(MAX_IMAGEN_BYTES)}.` }
-    }
-    try {
-        return await crearUrlSubida(contentType)
-    } catch (error) {
-        return { error: error instanceof Error ? error.message : 'No se pudo preparar la subida' }
-    }
 }

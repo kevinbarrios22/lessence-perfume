@@ -1,6 +1,8 @@
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import { buscarProductos, listarOpcionesFiltro } from '@/lib/productos'
+import { listarBannersActivos } from '@/lib/banners'
+import CarruselBanners from '@/components/CarruselBanners'
 import FiltrosCatalogo from '@/components/FiltrosCatalogo'
 import GrillaProductos from '@/components/GrillaProductos'
 import Paginacion from '@/components/Paginacion'
@@ -33,6 +35,11 @@ export default async function Home({ searchParams }: Props) {
         return null
     })
 
+    const banners = await listarBannersActivos().catch((error) => {
+        console.error(error)
+        return []
+    })
+
     if (!data) {
         return <p className="container-boutique py-12">Error cargando productos</p>
     }
@@ -46,7 +53,9 @@ export default async function Home({ searchParams }: Props) {
 
     return (
         <main>
-            <section className="container-boutique pt-10 pb-8 md:pt-20 md:pb-14 text-center">
+            <CarruselBanners banners={banners} />
+
+            <section className="container-boutique pt-8 pb-8 md:pt-14 md:pb-12 text-center">
                 <p className="text-cobre text-[10px] md:text-[11px] tracking-[0.3em] uppercase mb-4">
                     Perfumería selecta
                 </p>

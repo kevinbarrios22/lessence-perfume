@@ -31,6 +31,10 @@ test('claveImagenR2 solo devuelve claves de nuestro bucket', () => {
         claveImagenR2('https://bucket.r2.dev/productos/a.avif'),
         'productos/a.avif'
     )
+    assert.equal(
+        claveImagenR2('https://bucket.r2.dev/banners/b.avif'),
+        'banners/b.avif'
+    )
     assert.equal(claveImagenR2('https://evil.com/productos/a.avif'), null)
     assert.equal(claveImagenR2('https://bucket.r2.dev/otros/a.avif'), null)
     assert.equal(claveImagenR2('https://bucket.r2.dev/productos/../secreto'), null)

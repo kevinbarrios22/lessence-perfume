@@ -11,7 +11,8 @@ import {
     MAX_IMAGEN_BYTES,
     TIPOS_IMAGEN_PERMITIDOS,
 } from '@/lib/imagen'
-import { guardarProducto, solicitarUrlSubida, type EstadoProducto } from '@/app/admin/acciones-productos'
+import { guardarProducto, type EstadoProducto } from '@/app/admin/acciones-productos'
+import { solicitarUrlSubida } from '@/app/admin/acciones-imagenes'
 
 type FilaVariante = {
     key: string
