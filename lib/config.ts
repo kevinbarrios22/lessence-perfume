@@ -6,6 +6,9 @@ export const LOCALE = 'es-CO'
 export const WHATSAPP_NUMERO =
     process.env.NEXT_PUBLIC_WHATSAPP_NUMERO ?? '573228759145'
 
+export const INSTAGRAM_URL =
+    process.env.NEXT_PUBLIC_INSTAGRAM_URL || 'https://www.instagram.com/'
+
 export function siteUrl(): string {
     return (process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000').replace(/\/$/, '')
 }

@@ -6,21 +6,19 @@ import {
     useSyncExternalStore,
     ReactNode,
 } from 'react'
-
-type ItemCarrito = {
-    productoId: string
-    nombre: string
-    marca: string
-    imagen: string
-    varianteId: string
-    tamaño: string
-    precio: number
-    cantidad: number
-}
+import {
+    agregarItemCarrito,
+    cambiarCantidadCarrito,
+    leerItemsCarrito,
+    quitarItemCarrito,
+    resumirCarrito,
+    type ItemCarrito,
+    type NuevoItemCarrito,
+} from '@/lib/carrito-estado'
 
 type CarritoContextType = {
     items: ItemCarrito[]
-    agregarItem: (item: Omit<ItemCarrito, 'cantidad'>) => void
+    agregarItem: (item: NuevoItemCarrito) => void
     quitarItem: (varianteId: string) => void
     cambiarCantidad: (varianteId: string, cantidad: number) => void
     total: number
@@ -36,30 +34,10 @@ const itemsServidor: ItemCarrito[] = []
 let cargadoInicial = false
 const listeners = new Set<() => void>()
 
-function esItemValido(valor: unknown): valor is ItemCarrito {
-    if (typeof valor !== 'object' || valor === null) return false
-    const item = valor as Record<string, unknown>
-    return (
-        typeof item.productoId === 'string' &&
-        typeof item.nombre === 'string' &&
-        typeof item.marca === 'string' &&
-        typeof item.imagen === 'string' &&
-        typeof item.varianteId === 'string' &&
-        typeof item.tamaño === 'string' &&
-        typeof item.precio === 'number' &&
-        Number.isFinite(item.precio) &&
-        typeof item.cantidad === 'number' &&
-        Number.isFinite(item.cantidad) &&
-        item.cantidad > 0
-    )
-}
-
 function cargarDeStorage(): ItemCarrito[] {
     try {
         const raw = window.localStorage.getItem(STORAGE_KEY)
-        if (!raw) return []
-        const parsed = JSON.parse(raw)
-        return Array.isArray(parsed) ? parsed.filter(esItemValido) : []
+        return leerItemsCarrito(raw)
     } catch {
         return []
     }
@@ -101,40 +79,19 @@ export function CarritoProvider({ children }: { children: ReactNode }) {
         getServerSnapshot
     )
 
-    function agregarItem(nuevoItem: Omit<ItemCarrito, 'cantidad'>) {
-        const actual = getSnapshot()
-        const existente = actual.find((i) => i.varianteId === nuevoItem.varianteId)
-        if (existente) {
-            persistir(
-                actual.map((i) =>
-                    i.varianteId === nuevoItem.varianteId
-                        ? { ...i, cantidad: i.cantidad + 1 }
-                        : i
-                )
-            )
-            return
-        }
-        persistir([...actual, { ...nuevoItem, cantidad: 1 }])
+    function agregarItem(nuevoItem: NuevoItemCarrito) {
+        persistir(agregarItemCarrito(getSnapshot(), nuevoItem))
     }
 
     function quitarItem(varianteId: string) {
-        persistir(getSnapshot().filter((i) => i.varianteId !== varianteId))
+        persistir(quitarItemCarrito(getSnapshot(), varianteId))
     }
 
     function cambiarCantidad(varianteId: string, cantidad: number) {
-        if (cantidad <= 0) {
-            quitarItem(varianteId)
-            return
-        }
-        persistir(
-            getSnapshot().map((i) =>
-                i.varianteId === varianteId ? { ...i, cantidad } : i
-            )
-        )
+        persistir(cambiarCantidadCarrito(getSnapshot(), varianteId, cantidad))
     }
 
-    const total = itemsActuales.reduce((sum, i) => sum + i.precio * i.cantidad, 0)
-    const cantidadTotal = itemsActuales.reduce((sum, i) => sum + i.cantidad, 0)
+    const { total, cantidadTotal } = resumirCarrito(itemsActuales)
 
     return (
         <CarritoContext.Provider

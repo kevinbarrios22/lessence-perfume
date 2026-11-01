@@ -1,3 +1,5 @@
+
+import { env } from 'cloudflare:workers'
 import {
     S3Client,
     PutObjectCommand,
@@ -7,33 +9,51 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { randomUUID } from 'crypto'
 import { claveImagenR2, TIPOS_IMAGEN_PERMITIDOS } from './imagen'
 
+type R2Config = {
+    R2_ACCOUNT_ID?: string
+    R2_ACCESS_KEY_ID?: string
+    R2_SECRET_ACCESS_KEY?: string
+    R2_BUCKET?: string
+    R2_PUBLIC_URL?: string
+}
+
+function getConfig(): R2Config {
+    const bindings = env as unknown as R2Config
+
+    return {
+        R2_ACCOUNT_ID: bindings.R2_ACCOUNT_ID ?? process.env.R2_ACCOUNT_ID,
+        R2_ACCESS_KEY_ID: bindings.R2_ACCESS_KEY_ID ?? process.env.R2_ACCESS_KEY_ID,
+        R2_SECRET_ACCESS_KEY: bindings.R2_SECRET_ACCESS_KEY ?? process.env.R2_SECRET_ACCESS_KEY,
+        R2_BUCKET: bindings.R2_BUCKET ?? process.env.R2_BUCKET,
+        R2_PUBLIC_URL: bindings.R2_PUBLIC_URL ?? process.env.R2_PUBLIC_URL,
+    }
+}
+
 export function r2Configurado(): boolean {
+    const config = getConfig()
+
     return Boolean(
-        process.env.R2_ACCOUNT_ID &&
-            process.env.R2_ACCESS_KEY_ID &&
-            process.env.R2_SECRET_ACCESS_KEY &&
-            process.env.R2_BUCKET &&
-            process.env.R2_PUBLIC_URL
+        config.R2_ACCOUNT_ID &&
+        config.R2_ACCESS_KEY_ID &&
+        config.R2_SECRET_ACCESS_KEY &&
+        config.R2_BUCKET &&
+        config.R2_PUBLIC_URL
     )
 }
 
-let cliente: S3Client | undefined
-
-function getCliente(): S3Client {
+function getCliente(config: R2Config): S3Client {
     if (!r2Configurado()) {
         throw new Error('Falta configurar las variables R2_* en el entorno')
     }
-    if (!cliente) {
-        cliente = new S3Client({
-            region: 'auto',
-            endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-            credentials: {
-                accessKeyId: process.env.R2_ACCESS_KEY_ID as string,
-                secretAccessKey: process.env.R2_SECRET_ACCESS_KEY as string,
-            },
-        })
-    }
-    return cliente
+
+    return new S3Client({
+        region: 'auto',
+        endpoint: `https://${config.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+        credentials: {
+            accessKeyId: config.R2_ACCESS_KEY_ID!,
+            secretAccessKey: config.R2_SECRET_ACCESS_KEY!,
+        },
+    })
 }
 
 const EXTENSION_POR_TIPO: Record<string, string> = {
@@ -50,39 +70,49 @@ export async function crearUrlSubida(
     carpeta: CarpetaImagen = 'productos'
 ): Promise<{ uploadUrl: string; publicUrl: string }> {
     const extension = EXTENSION_POR_TIPO[contentType]
+
     if (!extension || !TIPOS_IMAGEN_PERMITIDOS.includes(contentType)) {
         throw new Error('Formato no permitido. Usa JPG, PNG, WEBP o AVIF.')
     }
+
     if (carpeta !== 'productos' && carpeta !== 'banners') {
         throw new Error('Carpeta de imagenes no válida')
     }
 
+    const config = getConfig()
     const key = `${carpeta}/${randomUUID()}.${extension}`
 
     const uploadUrl = await getSignedUrl(
-        getCliente(),
+        getCliente(config),
         new PutObjectCommand({
-            Bucket: process.env.R2_BUCKET,
+            Bucket: config.R2_BUCKET,
             Key: key,
             ContentType: contentType,
         }),
         { expiresIn: 600 }
     )
 
-    const base = (process.env.R2_PUBLIC_URL as string).replace(/\/$/, '')
-    return { uploadUrl, publicUrl: `${base}/${key}` }
+    const base = config.R2_PUBLIC_URL!.replace(/\/$/, '')
+
+    return {
+        uploadUrl,
+        publicUrl: `${base}/${key}`,
+    }
 }
 
 export async function eliminarImagenR2(
     publicUrl: string | null | undefined
 ): Promise<void> {
     const key = claveImagenR2(publicUrl)
+
     if (!key || !r2Configurado()) return
 
     try {
-        await getCliente().send(
+        const config = getConfig()
+
+        await getCliente(config).send(
             new DeleteObjectCommand({
-                Bucket: process.env.R2_BUCKET,
+                Bucket: config.R2_BUCKET,
                 Key: key,
             })
         )

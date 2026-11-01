@@ -9,8 +9,9 @@ import {
     ACCEPT_IMAGEN,
     formatearMB,
     MAX_IMAGEN_BYTES,
-    TIPOS_IMAGEN_PERMITIDOS,
+    validarImagenSubida,
 } from '@/lib/imagen'
+import { subirImagenFirmada } from '@/lib/subida-imagen'
 import { guardarProducto, type EstadoProducto } from '@/app/admin/acciones-productos'
 import { solicitarUrlSubida } from '@/app/admin/acciones-imagenes'
 
@@ -69,11 +70,12 @@ export default function ProductoForm({ producto }: { producto?: Producto }) {
     async function procesarArchivo(archivo: File) {
         setErrorImagen(null)
 
-        if (!TIPOS_IMAGEN_PERMITIDOS.includes(archivo.type)) {
+        const validacion = validarImagenSubida(archivo.type, archivo.size)
+        if (validacion === 'formato') {
             setErrorImagen('Formato no permitido. Usa JPG, PNG, WEBP o AVIF.')
             return
         }
-        if (archivo.size > MAX_IMAGEN_BYTES) {
+        if (validacion === 'tamaño') {
             setErrorImagen(
                 `La imagen pesa ${formatearMB(archivo.size)}; el máximo es ${formatearMB(MAX_IMAGEN_BYTES)}.`
             )
@@ -90,12 +92,7 @@ export default function ProductoForm({ producto }: { producto?: Producto }) {
         }
 
         try {
-            const subida = await fetch(respuesta.uploadUrl, {
-                method: 'PUT',
-                body: archivo,
-                headers: { 'Content-Type': archivo.type },
-            })
-            if (!subida.ok) throw new Error('fallo de subida')
+            await subirImagenFirmada(respuesta.uploadUrl, archivo)
             setImagen(respuesta.publicUrl)
         } catch {
             setErrorImagen('No se pudo subir la imagen. Revisa la configuración de R2.')

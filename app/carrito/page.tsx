@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useCarrito } from '@/lib/CarritoContext'
 import { formatearPrecio } from '@/lib/formato'
 import { WHATSAPP_NUMERO } from '@/lib/config'
+import { construirMensajePedidoWhatsApp, crearUrlWhatsApp } from '@/lib/pedido-whatsapp'
 import ProductImage from '@/components/ProductImage'
 import Link from 'next/link'
 
@@ -114,20 +115,11 @@ function CarritoContenido({ idsKey }: { idsKey: string }) {
     const verificando = itemsMostrados.some((item) => item.estado === 'verificando')
     const sinDisponibles = !verificando && itemsValidos.length === 0
 
-    function generarMensajeWhatsApp() {
-        const lineas = itemsValidos.map(
-            (item) =>
-                `• ${item.nombre} (${item.tamaño}) x${item.cantidad} - ${formatearPrecio(item.precio * item.cantidad)}`
-        )
-        const mensaje = [
-            'Hola! Quiero consultar disponibilidad de:',
-            '',
-            ...lineas,
-            '',
-            `Total: ${formatearPrecio(total)}`,
-        ].join('\n')
-        return `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(mensaje)}`
-    }
+    const mensajeWhatsApp = construirMensajePedidoWhatsApp(
+        itemsValidos,
+        total,
+        formatearPrecio
+    )
 
     return (
         <main className="container-boutique py-10 md:py-14">
@@ -252,7 +244,7 @@ function CarritoContenido({ idsKey }: { idsKey: string }) {
                 </button>
             ) : (
                 <a
-                    href={generarMensajeWhatsApp()}
+                    href={crearUrlWhatsApp(WHATSAPP_NUMERO, mensajeWhatsApp)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-8 block w-full md:w-auto md:mx-auto md:min-w-[26rem] text-center py-4 md:py-5 px-10 rounded-md font-medium text-base md:text-lg tracking-wide transition hover:opacity-90"

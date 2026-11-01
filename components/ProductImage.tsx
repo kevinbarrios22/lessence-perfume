@@ -7,6 +7,8 @@ type Props = {
     priority?: boolean
     sizes?: string
     className?: string
+    fit?: 'cover' | 'contain'
+    imageClassName?: string
 }
 
 function Placeholder({ alt }: { alt: string }) {
@@ -44,7 +46,15 @@ function Placeholder({ alt }: { alt: string }) {
     )
 }
 
-export default function ProductImage({ src, alt, priority = false, sizes, className = '' }: Props) {
+export default function ProductImage({
+    src,
+    alt,
+    priority = false,
+    sizes,
+    className = '',
+    fit = 'cover',
+    imageClassName = '',
+}: Props) {
     return (
         <div className={`relative overflow-hidden bg-alabastro/20 ${className}`}>
             {src ? (
@@ -55,7 +65,7 @@ export default function ProductImage({ src, alt, priority = false, sizes, classN
                     sizes={sizes}
                     priority={priority}
                     unoptimized={!hostImagenPermitido(src)}
-                    className="object-cover"
+                    className={`${fit === 'contain' ? 'object-contain' : 'object-cover'} ${imageClassName}`}
                 />
             ) : (
                 <Placeholder alt={alt} />

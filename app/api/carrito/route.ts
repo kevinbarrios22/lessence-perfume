@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getPool } from '@/lib/db'
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-const MAX_VARIANTES = 100
+import { normalizarIdsVariante } from '@/lib/carrito-api'
 
 type FilaVariante = {
     variante_id: string
@@ -25,17 +23,10 @@ export async function POST(request: Request) {
     }
 
     const crudos = (cuerpo as { varianteIds?: unknown } | null)?.varianteIds
-    if (!Array.isArray(crudos)) {
+    const ids = normalizarIdsVariante(crudos)
+    if (ids === null) {
         return NextResponse.json({ error: 'varianteIds es obligatorio' }, { status: 400 })
     }
-
-    const ids = [
-        ...new Set(
-            crudos
-                .filter((id): id is string => typeof id === 'string' && UUID_RE.test(id))
-                .slice(0, MAX_VARIANTES)
-        ),
-    ]
 
     if (ids.length === 0) {
         return NextResponse.json({ items: [] })

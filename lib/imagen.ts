@@ -13,6 +13,15 @@ export function formatearMB(bytes: number): string {
     return `${(bytes / 1048576).toFixed(1)} MB`
 }
 
+export function validarImagenSubida(
+    contentType: string,
+    tamaño: number
+): 'formato' | 'tamaño' | null {
+    if (!TIPOS_IMAGEN_PERMITIDOS.includes(contentType)) return 'formato'
+    if (!Number.isFinite(tamaño) || tamaño <= 0 || tamaño > MAX_IMAGEN_BYTES) return 'tamaño'
+    return null
+}
+
 // Mantener en sync con images.remotePatterns de next.config.ts.
 export const HOSTS_IMAGEN_PERMITIDOS = [
     'r2.dev',

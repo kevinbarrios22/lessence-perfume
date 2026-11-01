@@ -3,6 +3,7 @@ import { Playfair_Display, DM_Sans } from 'next/font/google'
 import { CarritoProvider } from '@/lib/CarritoContext'
 import { SITIO_NOMBRE, siteUrl } from '@/lib/config'
 import Header from '@/components/Header'
+import Footer from '@/components/Footer'
 import './globals.css'
 
 const playfair = Playfair_Display({
@@ -59,6 +60,7 @@ export default function RootLayout({
         <CarritoProvider>
             <Header />
             {children}
+            <Footer />
         </CarritoProvider>
         </body>
         </html>

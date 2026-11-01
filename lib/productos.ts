@@ -1,6 +1,10 @@
-import type { PoolClient } from 'pg'
-import { getPool } from '@/lib/db'
+import { getPool, type TransactionClient } from '@/lib/db'
 import { limpiarSlug } from '@/lib/slug'
+import {
+    calcularPaginacion,
+    construirWhereCatalogo,
+    normalizarPorPagina,
+} from '@/lib/catalogo-consulta'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -109,38 +113,29 @@ const POR_PAGINA_DEFECTO = 12
 const POR_PAGINA_MAX = 48
 
 export async function buscarProductos(filtros: FiltrosCatalogo): Promise<ResultadoCatalogo> {
-    const porPagina = Math.min(
-        Math.max(Math.trunc(filtros.porPagina ?? POR_PAGINA_DEFECTO), 1),
+    const porPagina = normalizarPorPagina(
+        filtros.porPagina,
+        POR_PAGINA_DEFECTO,
         POR_PAGINA_MAX
     )
     const pool = getPool()
-
-    const condiciones = ['p.disponible = true']
-    const valores: unknown[] = []
-    const param = (valor: unknown) => {
-        valores.push(valor)
-        return `$${valores.length}`
-    }
-
-    const q = filtros.q?.trim()
-    if (q) {
-        const patron = `%${q}%`
-        condiciones.push(`(p.nombre ilike ${param(patron)} or p.marca ilike ${param(patron)})`)
-    }
-    if (filtros.genero) condiciones.push(`p.genero = ${param(filtros.genero)}`)
-    if (filtros.marca) condiciones.push(`p.marca = ${param(filtros.marca)}`)
-    if (filtros.etiqueta) condiciones.push(`${param(filtros.etiqueta)} = any(p.etiquetas)`)
-
-    const where = condiciones.join(' and ')
+    const { where, valores } = construirWhereCatalogo(filtros)
 
     const totalRes = await pool.query<{ total: number }>(
         `select count(*)::int as total from productos p where ${where}`,
         valores
     )
     const total = totalRes.rows[0]?.total ?? 0
-    const totalPaginas = Math.max(Math.ceil(total / porPagina), 1)
-    const pagina = Math.min(Math.max(Math.trunc(filtros.pagina ?? 1), 1), totalPaginas)
-    const offset = (pagina - 1) * porPagina
+    const { pagina, totalPaginas, offset } = calcularPaginacion(
+        filtros.pagina,
+        total,
+        porPagina
+    )
+
+    const param = (valor: unknown) => {
+        valores.push(valor)
+        return `$${valores.length}`
+    }
 
     const { rows } = await pool.query<ProductoRow>(
         `
@@ -368,7 +363,7 @@ export async function crearProducto(input: ProductoInput): Promise<string> {
         await client.query('rollback')
         throw error
     } finally {
-        client.release()
+        await client.release()
     }
 }
 
@@ -411,7 +406,7 @@ export async function actualizarProducto(id: string, input: ProductoInput): Prom
         await client.query('rollback')
         throw error
     } finally {
-        client.release()
+        await client.release()
     }
 }
 
@@ -438,7 +433,7 @@ export async function imagenEnUso(imagen: string, exceptoId?: string): Promise<b
 }
 
 async function insertarVariantes(
-    client: PoolClient,
+    client: TransactionClient,
     productoId: string,
     variantes: VarianteInput[]
 ): Promise<void> {

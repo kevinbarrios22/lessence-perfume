@@ -48,3 +48,12 @@ yarn-error.log*
 *supabase.tsbuildinfo
 *.tsbuildinfo
 next-env.d.ts
+/dist/
+.vinext/
+.cloudflare/
+
+# Local database exports and diagnostic traces
+*.backup
+/parfumerie-datos.sql
+/supabase-import-limpio.sql
+/work/*.json

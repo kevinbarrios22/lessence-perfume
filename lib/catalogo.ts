@@ -8,7 +8,9 @@ export function estaAgotado(producto: Producto): boolean {
     return producto.variantes.filter((v) => v.disponible).length === 0
 }
 
-export function precioDesde(variantes: { precio: number }[]): number {
-    const precios = variantes.map((v) => v.precio).filter((p) => Number.isFinite(p))
+export function precioDesde(variantes: { precio: number; disponible?: boolean }[]): number {
+    const disponibles = variantes.filter((variante) => variante.disponible !== false)
+    const base = disponibles.length > 0 ? disponibles : variantes
+    const precios = base.map((v) => v.precio).filter((p) => Number.isFinite(p))
     return precios.length ? Math.min(...precios) : 0
 }
